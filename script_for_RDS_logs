@@ -1,0 +1,26 @@
+#!/bin/bash
+#Script to take daily Backups of RDS error and slow logs.
+#By Ravi Gadgil and Ankita Aeron
+
+#To get list of all slow logs available.
+/opt/aws/apitools/rds/bin/rds-describe-db-log-files --db-instance-identifier dbname --region ap-southeast-1 --aws-credential-file /opt/aws/apitools/rds/credential | awk '{print $2 }' | grep slow > /home/ravi/slowlog.txt
+
+#To get list of all error logs available.
+/opt/aws/apitools/rds/bin/rds-describe-db-log-files --db-instance-identifier dbname --region ap-southeast-1 --aws-credential-file /opt/aws/apitools/rds/credential | awk '{print $2 }' | grep error > /home/ravi/errorlog.txt
+
+slowlogfile=$(echo -e "slowlog-`date +%F-%H-%M`")
+errorlogfile=$(echo -e "errorlog-`date +%F-%H-%M`")
+
+for i in `cat /home/ravi/slowlog.txt` ; do
+
+#To download Slow Log files and add them to single file.
+/opt/aws/apitools/rds/bin/rds-download-db-logfile dbname --region ap-southeast-1  --log-file-name $i --debug --connection-timeout 3600 --aws-credential-file /opt/aws/apitools/rds/credential >> /data/slow_logs/$slowlogfile
+
+done
+
+for i in `cat /home/ravi/errorlog.txt` ; do
+
+#To download Error Log files and add them to single file.
+/opt/aws/apitools/rds/bin/rds-download-db-logfile dbname --region ap-southeast-1  --log-file-name $i --debug --connection-timeout 3600 --aws-credential-file /opt/aws/apitools/rds/credential >> /data/error_logs/$errorlogfile
+
+done
